@@ -11,26 +11,122 @@ def captions_available():
 def ai_hooks_available():
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
+
 def transcribe(src, start, end, workdir):
-    """Returns (words, note). words is a list of {w, s, e} relative to the clip start, or None if unavailable."""
+    """Extract audio and generate word-level timestamps using Faster-Whisper."""
+
     if not captions_available():
         return None, "Captions are not available on this server."
+
     global _model
+
     try:
-        wav = os.path.join(workdir, "seg.wav")
-        subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{end - start:.3f}",
-                        "-i", src, "-vn", "-ac", "1", "-ar", "16000", wav], check=True, timeout=300)
+        # Validate input
+        if not os.path.isfile(src):
+            raise FileNotFoundError(f"Source video not found: {src}")
+
+        duration = float(end) - float(start)
+
+        if duration <= 0:
+            raise ValueError("Invalid clip duration")
+
+        os.makedirs(workdir, exist_ok=True)
+
+        # Unique WAV filename to avoid concurrent request conflicts
+        wav = os.path.join(
+            workdir,
+            f"seg_{threading.get_ident()}.wav"
+        )
+
+        # Extract audio using FFmpeg
+        cmd = [
+            "ffmpeg",
+            "-hide_banner",
+            "-nostdin",
+            "-y",
+            "-loglevel", "error",
+            "-i", src,
+            "-ss", f"{start:.3f}",
+            "-t", f"{duration:.3f}",
+            "-map", "0:a:0",
+            "-vn",
+            "-ac", "1",
+            "-ar", "16000",
+            "-c:a", "pcm_s16le",
+            "-f", "wav",
+            wav
+        ]
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"FFmpeg audio extraction failed: {result.stderr}"
+            )
+
+        # Validate extracted audio
+        if not os.path.isfile(wav):
+            raise RuntimeError("FFmpeg did not create WAV file")
+
+        if os.path.getsize(wav) <= 44:
+            raise RuntimeError("Extracted WAV file is empty")
+
+        log.info(
+            "Audio extracted successfully: %s bytes",
+            os.path.getsize(wav)
+        )
+
+        # Load Whisper model
         from faster_whisper import WhisperModel
+
         with _mlock:
             if _model is None:
-                _model = WhisperModel(C.WHISPER_MODEL, device="cpu", compute_type="int8")
-            segs, _info = _model.transcribe(wav, word_timestamps=True, vad_filter=True, beam_size=1)
-            words = [{"w": w.word.strip(), "s": float(w.start), "e": float(w.end)}
-                     for s in segs for w in (s.words or []) if w.word.strip()]
-        return words, ("" if words else "No speech was detected in this clip.")
-    except Exception:
-        log.exception("transcription failed")
+                _model = WhisperModel(
+                    C.WHISPER_MODEL,
+                    device="cpu",
+                    compute_type="int8"
+                )
+
+        # Transcribe audio
+        segs, info = _model.transcribe(
+            wav,
+            word_timestamps=True,
+            vad_filter=True,
+            beam_size=1
+        )
+
+        words = []
+
+        for segment in segs:
+            for word in segment.words or []:
+                if word.word.strip():
+                    words.append({
+                        "w": word.word.strip(),
+                        "s": float(word.start),
+                        "e": float(word.end)
+                    })
+
+        log.info(
+            "Transcription completed. Language: %s, Words: %d",
+            info.language,
+            len(words)
+        )
+
+        return words, (
+            "" if words
+            else "No speech was detected in this clip."
+        )
+
+    except Exception as e:
+        log.exception("Transcription failed: %s", str(e))
+
         return None, "Captions could not be generated for this clip."
+
 
 def make_hook(text):
     """Returns (hook, source) where source is ai, fallback or none."""
