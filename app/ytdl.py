@@ -1,4 +1,4 @@
-import glob, logging, os
+import glob, logging, os, re, requests
 from urllib.parse import urlparse
 from . import config as C
 from .jobs import UserError
