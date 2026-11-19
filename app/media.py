@@ -4,11 +4,13 @@ from . import config as C
 from .jobs import UserError
 
 log = logging.getLogger("clipforge")
-SIZES = {"9:16": (1080, 1920), "1:1": (1080, 1080), "16:9": (1920, 1080)}
+SIZES = {"9:16": (720, 1280), "1:1": (720, 720), "16:9": (1280, 720)}
 MIN_SEC = 5
 
 def run_ffmpeg(args, total, cb=None, cwd=None):
-    cmd = ["ffmpeg", "-hide_banner", "-nostdin", "-y", "-v", "error", "-progress", "pipe:1", "-nostats"] + args
+    cmd = ["ffmpeg", "-hide_banner", "-nostdin", "-y", "-threads", "1",
+       "-filter_threads", "1", "-filter_complex_threads", "1",
+       "-v", "error", "-progress", "pipe:1", "-nostats"] + args
     with tempfile.TemporaryFile() as err:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=err, text=True, cwd=cwd)
         timer = threading.Timer(C.FFMPEG_TIMEOUT, p.kill)
@@ -152,6 +154,6 @@ def render_clip(src, start, dur, fmt, fit, focus, ass, out, has_audio, cb, cwd):
     args = ["-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", src, "-filter_complex", fc, "-map", "[v]"]
     if has_audio:
         args += ["-map", "0:a:0", "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-ac", "2"]
-    args += ["-c:v", "libx264", "-preset", C.X264_PRESET, "-crf", "21", "-profile:v", "high",
+    args += ["-c:v", "libx264", "-preset", C.X264_PRESET, "-crf", "23", "-profile:v", "main",
              "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-t", f"{dur:.3f}", out]
     run_ffmpeg(args, dur, cb, cwd)
