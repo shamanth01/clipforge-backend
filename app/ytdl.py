@@ -4,6 +4,43 @@ from . import config as C
 from .jobs import UserError
 
 log = logging.getLogger("clipforge")
+def get_youtube_details(url):
+    if not C.YOUTUBE_API_KEY:
+        raise UserError("YouTube API key is missing.")
+
+    video_id = None
+    parsed = urlparse(url)
+
+    if parsed.hostname == "youtu.be":
+        video_id = parsed.path.strip("/")
+    elif parsed.hostname and parsed.hostname.endswith("youtube.com"):
+        from urllib.parse import parse_qs
+        video_id = parse_qs(parsed.query).get("v", [None])[0]
+
+    if not video_id:
+        raise UserError("Invalid YouTube video URL.")
+
+    response = requests.get(
+        "https://www.googleapis.com/youtube/v3/videos",
+        params={
+            "part": "snippet,contentDetails,status",
+            "id": video_id,
+            "key": C.YOUTUBE_API_KEY
+        },
+        timeout=15
+    )
+    response.raise_for_status()
+
+    items = response.json().get("items", [])
+    if not items:
+        raise UserError("YouTube video not found or unavailable.")
+
+    video = items[0]
+    return {
+        "title": video["snippet"]["title"],
+        "duration": video["contentDetails"]["duration"],
+        "privacy": video["status"]["privacyStatus"]
+    }
 HOSTS = {"youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"}
 
 def validate_url(u):
