@@ -5,6 +5,7 @@ def _i(k, d):
 
 MAX_UPLOAD_MB = _i("MAX_UPLOAD_MB", 500)
 MAX_MINUTES = _i("MAX_MINUTES", 60)
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
 DATA_DIR = os.environ.get("DATA_DIR", "/tmp/clipforge")
 FILE_TTL_MIN = _i("FILE_TTL_MIN", 120)
 MAX_WORKERS = _i("MAX_WORKERS", 1)
