@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: clipforge
+    runtime: docker
+    plan: standard
+    healthCheckPath: /healthz
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: YT_POLICY
+        value: cc_only
+      - key: WHISPER_MODEL
+        value: base
+      - key: MAX_WORKERS
+        value: "2"
+      - key: MAX_UPLOAD_MB
+        value: "500"
+      - key: MAX_MINUTES
+        value: "60"
