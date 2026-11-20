@@ -19,7 +19,7 @@ async def lifespan(_):
     jobs.start_cleanup()
     yield
 
-app = FastAPI(title="ClipForge", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+app = FastAPI(title="ClipForge")
 if C.CORS_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=C.CORS_ORIGINS, allow_methods=["GET", "POST"], allow_headers=["*"])
 
