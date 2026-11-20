@@ -109,6 +109,14 @@ def from_url(req: UrlReq, request: Request):
     jobs.submit(pipeline.process_job, jid, "url", u)
     return {"job_id": jid}
 
+@app.post("/api/youtube-details")
+def youtube_details(req: UrlReq):
+    try:
+        u = ytdl.validate_url(req.url)
+        return ytdl.get_youtube_details(u)
+    except jobs.UserError as e:
+        raise HTTPException(400, str(e))
+
 @app.get("/api/jobs/{jid}")
 def job_status(jid: str):
     need(jid, "job")
