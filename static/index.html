@@ -35,7 +35,7 @@ h1{font-size:clamp(36px,6.4vw,72px);line-height:1.02;letter-spacing:-.04em;margi
 .drop input{position:absolute;opacity:0;width:1px;height:1px}
 .or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;margin:12px 4px}
 .or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
-.linkrow{display:flex;gap:8px}.linkrow input{flex:1;min-width:0}
+.id=link{display:flex;gap:8px}.id=link input{flex:1;min-width:0}
 .msg{color:var(--muted);font-size:13px;margin:8px 4px 0;min-height:19px}
 .btn{appearance:none;border:0;border-radius:12px;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer;background:var(--grad);color:#fff;transition:transform .12s,filter .12s}
 .btn:hover{filter:brightness(1.08)}.btn:active{transform:scale(.97)}
@@ -123,12 +123,9 @@ footer{margin-top:64px;text-align:center;color:var(--muted);font-size:13px;borde
 <section class="hero"><div class="hero-l">
 <span class="badge">Free to use. Files are deleted after 2 hours</span>
 <h1>Find the 30 seconds worth posting.</h1>
-<p class="sub">Upload a long video or paste a link. ClipForge picks the strongest moments and exports them as vertical clips with captions and a hook headline, ready for Reels, Shorts and TikTok.</p>
+<p class="sub">Upload a long video. ClipForge picks the strongest moments and exports them as vertical clips with captions and a hook headline, ready for Reels, Shorts and TikTok.</p>
 <div class="intake">
 <label class="drop" id="drop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg><b>Drop a video here, or click to upload</b><small>MP4, MOV or WebM</small><input type="file" id="file" accept="video/*"></label>
-<div class="or">or paste a link</div>
-<div class="linkrow"><input type="text" id="link" placeholder="https://youtube.com/watch?v=…" aria-label="Video link"><button class="btn" id="getlink">Get video</button></div>
-<p id="linkmsg" class="msg"></p>
 </div>
 </div>
 <div class="hero-r" aria-hidden="true">
