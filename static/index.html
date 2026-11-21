@@ -228,10 +228,26 @@ async function begin(start){
   }catch(e){msg(e.message)}
 }
 $("#getlink").onclick=async()=>{
-  const u=$("#link").value.trim(),b=$("#getlink");if(!u)return;
-  b.disabled=true;msg("Contacting the server…");
-  await begin(api("/api/url",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:u})}));
-  b.disabled=false;
+  const u=$("#link").value.trim(),b=$("#getlink");
+  if(!u)return;
+
+  b.disabled=true;
+  msg("Checking YouTube link...");
+
+  try{
+    const info=await api("/api/youtube-details",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({url:u})
+    });
+
+    msg("Video found: "+info.title+" | Duration: "+info.duration+
+        ". Now upload an authorised video file to create clips.");
+  }catch(e){
+    msg(e.message);
+  }finally{
+    b.disabled=false;
+  }
 };
 $("#regen").onclick=build;$("#len").onchange=build;$("#cnt").onchange=build;
 
